@@ -1,8 +1,10 @@
+import { ShareData, ShareModal } from '@/components/ui/ShareModal';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useAudio } from '@/context/AudioContext';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Bookmark, Clock, Play, Share2 } from 'lucide-react-native';
+import { useState } from 'react';
 import {
     FlatList,
     Image,
@@ -41,7 +43,9 @@ export default function BookDetailScreen() {
     const { id } = useLocalSearchParams();
     const colors = useThemeColors();
     const router = useRouter();
-    const { playTrack, currentTrack, isPlaying } = useAudio();
+    const { playTrack, currentTrack } = useAudio();
+
+    const [shareData, setShareData] = useState<ShareData | null>(null);
 
     const bookDetail = {
         id,
@@ -63,17 +67,25 @@ export default function BookDetailScreen() {
         });
     };
 
+    const handleOpenShare = () => {
+        setShareData({
+            title: bookDetail.title,
+            subtitle: `Tác giả: ${bookDetail.author}`,
+            url: `https://kinhthanh.app/book/${bookDetail.id}`,
+        });
+    };
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn} hitSlop={8}>
                     <ArrowLeft color={colors.text} size={24} />
                 </TouchableOpacity>
                 <View style={styles.headerActions}>
-                    <TouchableOpacity style={styles.iconBtn}>
+                    <TouchableOpacity style={styles.iconBtn} hitSlop={8}>
                         <Bookmark color={colors.text} size={22} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconBtn}>
+                    <TouchableOpacity onPress={handleOpenShare} style={styles.iconBtn} hitSlop={8}>
                         <Share2 color={colors.text} size={22} />
                     </TouchableOpacity>
                 </View>
@@ -156,13 +168,19 @@ export default function BookDetailScreen() {
                 }}
                 contentContainerStyle={styles.listContent}
             />
+
+            <ShareModal
+                visible={!!shareData}
+                data={shareData}
+                onClose={() => setShareData(null)}
+            />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1
+        flex: 1,
     },
     header: {
         flexDirection: 'row',
@@ -173,35 +191,36 @@ const styles = StyleSheet.create({
     },
     headerActions: {
         flexDirection: 'row',
-        gap: Spacing.two
+        gap: Spacing.two,
     },
     iconBtn: {
-        padding: Spacing.two
+        padding: Spacing.two,
     },
     listContent: {
         paddingHorizontal: Spacing.four,
-        paddingBottom: Spacing.six
+        paddingBottom: Spacing.six,
     },
     bookHeader: {
         alignItems: 'center',
         marginTop: Spacing.two,
-        marginBottom: Spacing.four
+        marginBottom: Spacing.four,
     },
     artwork: {
-        width: 160, height: 160,
+        width: 160,
+        height: 160,
         borderRadius: BorderRadius.xl,
-        marginBottom: Spacing.four
+        marginBottom: Spacing.four,
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
         fontFamily: Fonts.sans,
-        textAlign: 'center'
+        textAlign: 'center',
     },
     author: {
         fontSize: 14,
         fontFamily: Fonts.sans,
-        marginTop: Spacing.one
+        marginTop: Spacing.one,
     },
     mainPlayBtn: {
         flexDirection: 'row',
@@ -215,7 +234,7 @@ const styles = StyleSheet.create({
     mainPlayText: {
         fontSize: 15,
         fontWeight: 'bold',
-        fontFamily: Fonts.sans
+        fontFamily: Fonts.sans,
     },
     description: {
         fontSize: 14,
@@ -245,31 +264,31 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
         fontFamily: Fonts.sans,
-        width: 20
+        width: 20,
     },
     chapterInfo: {
-        flex: 1
+        flex: 1,
     },
     chapterTitle: {
         fontSize: 15,
         fontWeight: '600',
-        fontFamily: Fonts.sans
+        fontFamily: Fonts.sans,
     },
     timeRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-        marginTop: 4
+        marginTop: 4,
     },
     chapterTime: {
         fontSize: 12,
-        fontFamily: Fonts.sans
+        fontFamily: Fonts.sans,
     },
     playCircle: {
         width: 36,
         height: 36,
         borderRadius: 18,
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
     },
 });

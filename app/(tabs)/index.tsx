@@ -1,9 +1,10 @@
-import { Fonts, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useAudio } from '@/context/AudioContext';
 import { useThemeColors } from '@/hooks/use-theme';
 import { usePlayerStore } from '@/store/usePlayerStore';
 import { Chapter } from '@/types/bible';
-import { BookOpen, Compass, Flame, Heart, Play } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { BookOpen, Compass, Flame, Heart, Play, Sparkles } from 'lucide-react-native';
 import {
     SafeAreaView,
     ScrollView,
@@ -37,38 +38,63 @@ const RECOMMENDED_CHAPTERS: Chapter[] = [
         bookName: 'Ma-thi-ơ',
         chapterNum: 5,
         duration: '04:15',
-        audioUrl: 'https://example.com/audio/matthew-5.mp3',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+        reader: 'Giọng đọc Nam',
+    },
+    {
+        id: '4',
+        bookName: 'Thi Thiên',
+        chapterNum: 23,
+        duration: '03:10',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
         reader: 'Giọng đọc Nam',
     },
 ];
 
 export default function HomeScreen() {
     const colors = useThemeColors();
+    const router = useRouter();
     const { setCurrentChapter } = usePlayerStore();
+    const { playTrack, currentTrack, isPlaying, togglePlayPause } = useAudio();
 
-    const handlePlay = (chapter: Chapter) => {
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) {
+            return 'Chào buổi sáng';
+        }
+        if (hour < 18) {
+            return 'Chào buổi chiều';
+        }
+        return 'Chào buổi tối';
+    };
+
+    const handlePlayChapter = (chapter: Chapter) => {
         setCurrentChapter(chapter);
+
+        if (currentTrack?.id === chapter.id) {
+            togglePlayPause();
+        } else {
+            playTrack({
+                id: chapter.id,
+                title: `${chapter.bookName} - Chương ${chapter.chapterNum}`,
+                subtitle: chapter.reader,
+                audioUrl: chapter.audioUrl,
+                artworkUrl: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=300',
+                duration: 300,
+            });
+        }
     };
 
-    const { playTrack } = useAudio();
-
-    const handlePlayAudio = () => {
-        playTrack({
-            id: 'gen-1',
-            title: 'Sáng Khải Huyền - Chương 1',
-            subtitle: 'Sách Khải Huyền',
-            audioUrl: 'https://s3.us-west-1.wasabisys.com/thanhlinh.net/drupal_files/2024-11/1307--khai-huyen---01.mp3',
-            artworkUrl: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=300',
-            duration: 372,
-        });
-    };
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <StatusBar barStyle="default" />
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
                 <View style={styles.header}>
-                    <Text style={[styles.greeting, { color: colors.text }]}>Chào buổi sáng</Text>
+                    <View style={styles.greetingRow}>
+                        <Text style={[styles.greeting, { color: colors.text }]}>{getGreeting()}</Text>
+                        <Sparkles size={20} color={colors.primary} />
+                    </View>
                     <Text style={[styles.subGreeting, { color: colors.textMuted }]}>
                         "Lời Chúa là ngọn đèn cho chân tôi, ánh sáng cho đường lối tôi"
                     </Text>
@@ -84,7 +110,7 @@ export default function HomeScreen() {
                         },
                     ]}
                     activeOpacity={0.8}
-                    onPress={() => handlePlayAudio()}
+                    onPress={() => handlePlayChapter(RECENT_CHAPTER)}
                 >
                     <View style={styles.bannerInfo}>
                         <Text style={[styles.bannerTag, { color: colors.primary }]}>ĐANG NGHE DỞ</Text>
@@ -96,7 +122,7 @@ export default function HomeScreen() {
                         </Text>
                     </View>
                     <View style={[styles.playButtonCircle, { backgroundColor: colors.primary }]}>
-                        <Play color={colors.primaryElement} size={24} fill={colors.primaryElement} />
+                        <Play color={colors.primaryElement} size={22} fill={colors.primaryElement} style={{ marginLeft: 2 }} />
                     </View>
                 </TouchableOpacity>
 
@@ -107,33 +133,44 @@ export default function HomeScreen() {
                             styles.categoryCard,
                             { backgroundColor: colors.card, borderColor: colors.border },
                         ]}
+                        activeOpacity={0.7}
+                        onPress={() => router.push('/explore' as any)}
                     >
                         <Flame color="#F59E0B" size={24} />
                         <Text style={[styles.categoryText, { color: colors.text }]}>Bình An</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                         style={[
                             styles.categoryCard,
                             { backgroundColor: colors.card, borderColor: colors.border },
                         ]}
+                        activeOpacity={0.7}
+                        onPress={() => router.push('/bible' as any)}
                     >
                         <BookOpen color="#3B82F6" size={24} />
                         <Text style={[styles.categoryText, { color: colors.text }]}>Cựu Ước</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                         style={[
                             styles.categoryCard,
                             { backgroundColor: colors.card, borderColor: colors.border },
                         ]}
+                        activeOpacity={0.7}
+                        onPress={() => router.push('/bible' as any)}
                     >
                         <Compass color="#10B981" size={24} />
                         <Text style={[styles.categoryText, { color: colors.text }]}>Tân Ước</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                         style={[
                             styles.categoryCard,
                             { backgroundColor: colors.card, borderColor: colors.border },
                         ]}
+                        activeOpacity={0.7}
+                        onPress={() => router.push('/explore' as any)}
                     >
                         <Heart color="#EC4899" size={24} />
                         <Text style={[styles.categoryText, { color: colors.text }]}>Cầu Nguyện</Text>
@@ -141,28 +178,41 @@ export default function HomeScreen() {
                 </View>
 
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Gợi ý cho bạn</Text>
-                {RECOMMENDED_CHAPTERS.map((item) => (
-                    <TouchableOpacity
-                        key={item.id}
-                        style={[
-                            styles.listItem,
-                            { backgroundColor: colors.card, borderColor: colors.border },
-                        ]}
-                        onPress={() => handlePlayAudio()}
-                    >
-                        <View style={styles.listInfo}>
-                            <Text style={[styles.listTitle, { color: colors.text }]}>
-                                {item.bookName} - Chương {item.chapterNum}
-                            </Text>
-                            <Text style={[styles.listSub, { color: colors.textMuted }]}>
-                                {item.reader} • {item.duration}
-                            </Text>
-                        </View>
-                        <TouchableOpacity onPress={() => handlePlayAudio()} style={styles.listPlayBtn}>
-                            <Play color={colors.primary} size={20} fill={colors.primary} />
+                {RECOMMENDED_CHAPTERS.map((item) => {
+                    const isItemPlaying = currentTrack?.id === item.id && isPlaying;
+
+                    return (
+                        <TouchableOpacity
+                            key={item.id}
+                            style={[
+                                styles.listItem,
+                                { backgroundColor: colors.card, borderColor: colors.border },
+                            ]}
+                            activeOpacity={0.7}
+                            onPress={() => handlePlayChapter(item)}
+                        >
+                            <View style={styles.listInfo}>
+                                <Text style={[styles.listTitle, { color: colors.text }]}>
+                                    {item.bookName} - Chương {item.chapterNum}
+                                </Text>
+                                <Text style={[styles.listSub, { color: colors.textMuted }]}>
+                                    {item.reader} • {item.duration}
+                                </Text>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => handlePlayChapter(item)}
+                                style={[styles.listPlayBtn, { backgroundColor: colors.backgroundElement }]}
+                            >
+                                <Play
+                                    color={colors.primary}
+                                    size={16}
+                                    fill={isItemPlaying ? colors.primary : 'transparent'}
+                                    style={{ marginLeft: 2 }}
+                                />
+                            </TouchableOpacity>
                         </TouchableOpacity>
-                    </TouchableOpacity>
-                ))}
+                    );
+                })}
 
             </ScrollView>
         </SafeAreaView>
@@ -174,12 +224,18 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        padding: Spacing.four,
-        paddingBottom: Spacing.six * 2,
+        paddingHorizontal: Spacing.four,
+        paddingTop: Spacing.two,
+        paddingBottom: 120,
     },
     header: {
-        marginTop: Spacing.three,
-        marginBottom: Spacing.six,
+        marginTop: Spacing.two,
+        marginBottom: Spacing.four,
+    },
+    greetingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.two,
     },
     greeting: {
         fontSize: 24,
@@ -191,6 +247,7 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         fontFamily: Fonts.sans,
         marginTop: Spacing.one,
+        lineHeight: 18,
     },
     sectionTitle: {
         fontSize: 18,
@@ -200,8 +257,8 @@ const styles = StyleSheet.create({
         marginTop: Spacing.four,
     },
     banner: {
-        borderRadius: 16,
-        padding: Spacing.five,
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.four,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -242,7 +299,7 @@ const styles = StyleSheet.create({
     },
     categoryCard: {
         width: '48.5%',
-        borderRadius: 12,
+        borderRadius: BorderRadius.md,
         padding: Spacing.four,
         flexDirection: 'row',
         alignItems: 'center',
@@ -250,11 +307,12 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     categoryText: {
-        fontWeight: '500',
+        fontWeight: '600',
+        fontSize: 14,
         fontFamily: Fonts.sans,
     },
     listItem: {
-        borderRadius: 12,
+        borderRadius: BorderRadius.md,
         padding: Spacing.four,
         flexDirection: 'row',
         alignItems: 'center',
@@ -266,8 +324,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     listTitle: {
-        fontSize: 16,
-        fontWeight: '500',
+        fontSize: 15,
+        fontWeight: '600',
         fontFamily: Fonts.sans,
     },
     listSub: {
@@ -276,6 +334,10 @@ const styles = StyleSheet.create({
         marginTop: Spacing.half,
     },
     listPlayBtn: {
-        padding: Spacing.two,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });

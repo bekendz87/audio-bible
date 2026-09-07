@@ -4,10 +4,32 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
+import { setupAudioSession } from './track-player-service';
+import { GlobalAlertContainer } from "@/components/ui/GlobalAlertContainer"
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
+
+  const initAudioMode = async () => {
+    try {
+      setupAudioSession().catch((err) =>
+        console.error('Lỗi khởi tạo Audio Session:', err)
+      );
+    } catch (error) {
+      console.error('Lỗi khởi tạo AudioMode:', error);
+    }
+  };
+
+  useEffect(() => {
+    setupAudioSession().catch((err) =>
+      console.error('Lỗi khởi tạo Audio Session:', err)
+    );
+  }, []);
+
+  useEffect(() => {
+    initAudioMode();
+  }, []);
 
   useEffect(() => {
     async function prepareApp() {
@@ -45,6 +67,7 @@ export default function RootLayout() {
 
         </Stack>
         <MiniPlayer />
+        <GlobalAlertContainer />
       </AudioProvider>
     </ThemeProvider>
 

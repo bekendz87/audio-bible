@@ -1,7 +1,15 @@
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useAudio } from '@/context/AudioContext';
 import { useThemeColors } from '@/hooks/use-theme';
-import { BookMarked, Download, History, Play } from 'lucide-react-native';
+import {
+    Bookmark,
+    Clock,
+    DownloadCloud,
+    Headphones,
+    MoreVertical,
+    Pause,
+    Play
+} from 'lucide-react-native';
 import { useState } from 'react';
 import {
     FlatList,
@@ -13,67 +21,92 @@ import {
     View,
 } from 'react-native';
 
-const HISTORY_DATA = [
+const SAVED_ITEMS = [
     {
         id: '1',
-        title: 'Thiết Kế Hệ Thống Microservices',
-        subtitle: 'Chương 1: Tổng quan kiến trúc',
-        artworkUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600',
+        title: 'Sáng Thế Ký - Chương 1',
+        subtitle: 'Sách Sáng Thế Ký',
+        duration: '05:12',
+        artworkUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=300',
         audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        duration: 1800,
     },
     {
         id: '2',
-        title: 'Đắc Nhân Tâm',
-        subtitle: 'Chương 2: Bí mật lớn nhất trong ứng xử',
-        artworkUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=600',
+        title: 'Ma-thi-ơ - Chương 5',
+        subtitle: 'Bài giảng trên núi',
+        duration: '08:45',
+        artworkUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=300',
         audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-        duration: 1200,
     },
 ];
 
+const HISTORY_ITEMS = [
+    {
+        id: '3',
+        title: 'Khải Huyền - Chương 23',
+        subtitle: 'Nghe lần cuối 2 giờ trước',
+        duration: '06:10',
+        artworkUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    },
+];
+
+type TabType = 'saved' | 'history' | 'downloaded';
+
 export default function LibraryScreen() {
     const colors = useThemeColors();
-    const { playTrack } = useAudio();
-    const [activeTab, setActiveTab] = useState<'history' | 'saved' | 'downloaded'>('history');
+    const { currentTrack, isPlaying, togglePlayPause, playTrack } = useAudio();
+    const [activeTab, setActiveTab] = useState<TabType>('saved');
+
+    const getListData = () => {
+        switch (activeTab) {
+            case 'saved':
+                return SAVED_ITEMS;
+            case 'history':
+                return HISTORY_ITEMS;
+            case 'downloaded':
+                return SAVED_ITEMS.slice(0, 1); 
+            default:
+                return [];
+        }
+    };
+
+    const handleItemPress = (item: typeof SAVED_ITEMS[0]) => {
+        if (currentTrack?.id === item.id) {
+            togglePlayPause();
+        } else {
+            playTrack({
+                id: item.id,
+                title: item.title,
+                subtitle: item.subtitle,
+                audioUrl: item.audioUrl,
+                artworkUrl: item.artworkUrl,
+            });
+        }
+    };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text }]}>Thư viện của tôi</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Thư viện của tôi</Text>
             </View>
 
-            <View style={styles.tabBar}>
+            <View style={[styles.tabBar, { borderBottomColor: colors.border }]}>
                 <TouchableOpacity
                     style={[
                         styles.tabItem,
-                        activeTab === 'history' && { backgroundColor: colors.primary },
-                    ]}
-                    onPress={() => setActiveTab('history')}
-                >
-                    <History color={activeTab === 'history' ? colors.primaryElement : colors.text} size={16} />
-                    <Text
-                        style={[
-                            styles.tabText,
-                            { color: activeTab === 'history' ? colors.primaryElement : colors.text },
-                        ]}
-                    >
-                        Đã nghe
-                    </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[
-                        styles.tabItem,
-                        activeTab === 'saved' && { backgroundColor: colors.primary },
+                        activeTab === 'saved' && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
                     ]}
                     onPress={() => setActiveTab('saved')}
                 >
-                    <BookMarked color={activeTab === 'saved' ? colors.primaryElement : colors.text} size={16} />
+                    <Bookmark
+                        size={18}
+                        color={activeTab === 'saved' ? colors.primary : colors.textMuted}
+                    />
                     <Text
                         style={[
                             styles.tabText,
-                            { color: activeTab === 'saved' ? colors.primaryElement : colors.text },
+                            { color: activeTab === 'saved' ? colors.primary : colors.textMuted },
                         ]}
                     >
                         Đã lưu
@@ -83,85 +116,185 @@ export default function LibraryScreen() {
                 <TouchableOpacity
                     style={[
                         styles.tabItem,
-                        activeTab === 'downloaded' && { backgroundColor: colors.primary },
+                        activeTab === 'history' && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
                     ]}
-                    onPress={() => setActiveTab('downloaded')}
+                    onPress={() => setActiveTab('history')}
                 >
-                    <Download color={activeTab === 'downloaded' ? colors.primaryElement : colors.text} size={16} />
+                    <Clock
+                        size={18}
+                        color={activeTab === 'history' ? colors.primary : colors.textMuted}
+                    />
                     <Text
                         style={[
                             styles.tabText,
-                            { color: activeTab === 'downloaded' ? colors.primaryElement : colors.text },
+                            { color: activeTab === 'history' ? colors.primary : colors.textMuted },
                         ]}
                     >
-                        Đã tải
+                        Lịch sử
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[
+                        styles.tabItem,
+                        activeTab === 'downloaded' && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
+                    ]}
+                    onPress={() => setActiveTab('downloaded')}
+                >
+                    <DownloadCloud
+                        size={18}
+                        color={activeTab === 'downloaded' ? colors.primary : colors.textMuted}
+                    />
+                    <Text
+                        style={[
+                            styles.tabText,
+                            { color: activeTab === 'downloaded' ? colors.primary : colors.textMuted },
+                        ]}
+                    >
+                        Tải về
                     </Text>
                 </TouchableOpacity>
             </View>
 
             <FlatList
-                data={HISTORY_DATA}
+                data={getListData()}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        style={[styles.itemCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                        onPress={() => playTrack(item)}
-                        activeOpacity={0.7}
-                    >
-                        <Image source={{ uri: item.artworkUrl }} style={styles.image} />
-                        <View style={styles.info}>
-                            <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={1}>
-                                {item.title}
-                            </Text>
-                            <Text style={[styles.itemSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                                {item.subtitle}
-                            </Text>
-                        </View>
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Headphones size={48} color={colors.textMuted} />
+                        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                            Chưa có nội dung nào ở mục này
+                        </Text>
+                    </View>
+                }
+                renderItem={({ item }) => {
+                    const isCurrentPlaying = currentTrack?.id === item.id && isPlaying;
+
+                    return (
                         <TouchableOpacity
-                            style={[styles.playBtn, { backgroundColor: colors.primary }]}
-                            onPress={() => playTrack(item)}
+                            activeOpacity={0.7}
+                            style={[styles.trackCard, { backgroundColor: colors.card }]}
+                            onPress={() => handleItemPress(item)}
                         >
-                            <Play color={colors.primaryElement} size={16} style={{ marginLeft: 2 }} />
+                            <Image source={{ uri: item.artworkUrl }} style={styles.artwork} />
+
+                            <View style={styles.trackInfo}>
+                                <Text numberOfLines={1} style={[styles.trackTitle, { color: colors.text }]}>
+                                    {item.title}
+                                </Text>
+                                <Text numberOfLines={1} style={[styles.trackSubtitle, { color: colors.textMuted }]}>
+                                    {item.subtitle} • {item.duration}
+                                </Text>
+                            </View>
+
+                            <TouchableOpacity
+                                style={[
+                                    styles.playActionBtn,
+                                    { backgroundColor: isCurrentPlaying ? colors.primary : colors.background },
+                                ]}
+                                onPress={() => handleItemPress(item)}
+                            >
+                                {isCurrentPlaying ? (
+                                    <Pause size={18} color={colors.primaryElement} />
+                                ) : (
+                                    <Play size={18} color={colors.primary} style={{ marginLeft: 2 }} />
+                                )}
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.moreBtn}>
+                                <MoreVertical size={20} color={colors.textMuted} />
+                            </TouchableOpacity>
                         </TouchableOpacity>
-                    </TouchableOpacity>
-                )}
+                    );
+                }}
             />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    header: { paddingHorizontal: Spacing.four, paddingTop: Spacing.two },
-    title: { fontSize: 28, fontWeight: 'bold', fontFamily: Fonts.sans },
+    container: {
+        flex: 1,
+    },
+    header: {
+        paddingHorizontal: Spacing.four,
+        paddingTop: Spacing.two,
+        paddingBottom: Spacing.two,
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        fontFamily: Fonts.sans,
+    },
     tabBar: {
         flexDirection: 'row',
         paddingHorizontal: Spacing.four,
-        marginVertical: Spacing.four,
-        gap: Spacing.two,
+        borderBottomWidth: 1,
     },
     tabItem: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        paddingHorizontal: Spacing.three,
-        paddingVertical: Spacing.two,
-        borderRadius: BorderRadius.full,
+        paddingVertical: 12,
+        marginRight: Spacing.four,
     },
-    tabText: { fontSize: 13, fontWeight: '600', fontFamily: Fonts.sans },
-    listContent: { paddingHorizontal: Spacing.four, gap: Spacing.three },
-    itemCard: {
+    tabText: {
+        fontSize: 14,
+        fontWeight: '600',
+        fontFamily: Fonts.sans,
+    },
+    listContent: {
+        padding: Spacing.four,
+        paddingBottom: 100, 
+        gap: Spacing.two,
+    },
+    trackCard: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: Spacing.two,
         borderRadius: BorderRadius.lg,
-        borderWidth: 1,
-        gap: Spacing.three,
     },
-    image: { width: 56, height: 56, borderRadius: BorderRadius.md },
-    info: { flex: 1 },
-    itemTitle: { fontSize: 15, fontWeight: '600', fontFamily: Fonts.sans },
-    itemSubtitle: { fontSize: 13, fontFamily: Fonts.sans, marginTop: 2 },
-    playBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+    artwork: {
+        width: 52,
+        height: 52,
+        borderRadius: BorderRadius.md,
+    },
+    trackInfo: {
+        flex: 1,
+        marginLeft: Spacing.three,
+        justifyContent: 'center',
+    },
+    trackTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+        fontFamily: Fonts.sans,
+    },
+    trackSubtitle: {
+        fontSize: 12,
+        marginTop: 3,
+        fontFamily: Fonts.sans,
+    },
+    playActionBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginHorizontal: Spacing.one,
+    },
+    moreBtn: {
+        padding: Spacing.one,
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+        gap: 12,
+    },
+    emptyText: {
+        fontSize: 14,
+        fontFamily: Fonts.sans,
+    },
 });

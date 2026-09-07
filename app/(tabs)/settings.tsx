@@ -2,52 +2,48 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/context/ThemeContext';
 import { useThemeColors } from '@/hooks/use-theme';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { ChevronRight, KeyRound, LogOut, Moon, Sun, User } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
-const THEME_STORAGE_KEY = '@app_theme';
+import {
+    Bell,
+    ChevronRight,
+    DownloadCloud,
+    Globe,
+    HelpCircle,
+    Info,
+    LogOut,
+    Moon,
+    ShieldCheck,
+    Sun,
+    User,
+    Volume2
+} from 'lucide-react-native';
+import { useState } from 'react';
+import {
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function SettingsScreen() {
     const { isDark, toggleTheme } = useTheme();
     const colors = useThemeColors();
     const router = useRouter();
 
-    const [isDarkMode, setIsDarkMode] = useState(false);
     const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+    const [autoDownload, setAutoDownload] = useState(true);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
     const user = {
         name: 'Nguyễn Văn A',
         email: 'nguyenvana@gmail.com',
     };
 
-    useEffect(() => {
-        const loadSavedTheme = async () => {
-            try {
-                const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-                if (savedTheme !== null) {
-                    setIsDarkMode(savedTheme === 'dark');
-                }
-            } catch (error) {
-                console.error('Lỗi đọc theme từ storage:', error);
-            }
-        };
-        loadSavedTheme();
-    }, []);
-
-    const handleToggleTheme = async (val: boolean) => {
-        setIsDarkMode(val);
-        try {
-            await AsyncStorage.setItem(THEME_STORAGE_KEY, val ? 'dark' : 'light');
-        } catch (error) {
-            console.error('Lỗi lưu theme vào storage:', error);
-        }
-    };
-
     const handleConfirmLogout = () => {
         setIsLogoutModalVisible(false);
-
     };
 
     return (
@@ -56,8 +52,12 @@ export default function SettingsScreen() {
                 <Text style={[styles.headerTitle, { color: colors.text }]}>Tài khoản & Cài đặt</Text>
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <TouchableOpacity
+                    style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    activeOpacity={0.7}
+                    onPress={() => router.push('/profile' as any)}
+                >
                     <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
                         <User color={colors.primaryElement} size={28} />
                     </View>
@@ -65,13 +65,14 @@ export default function SettingsScreen() {
                         <Text style={[styles.profileName, { color: colors.text }]}>{user.name}</Text>
                         <Text style={[styles.profileEmail, { color: colors.textMuted }]}>{user.email}</Text>
                     </View>
-                </View>
+                    <ChevronRight color={colors.textMuted} size={20} />
+                </TouchableOpacity>
 
-                <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>GIAO DIỆN</Text>
+                <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>GIAO DIỆN & ÂM THANH</Text>
                 <View style={[styles.group, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={styles.row}>
                         <View style={styles.rowLeft}>
-                            {isDarkMode ? <Moon color={colors.primary} size={20} /> : <Sun color={colors.primary} size={20} />}
+                            {isDark ? <Moon color={colors.primary} size={20} /> : <Sun color={colors.primary} size={20} />}
                             <Text style={[styles.rowLabel, { color: colors.text }]}>Chế độ {isDark ? 'tối' : 'sáng'}</Text>
                         </View>
                         <Switch
@@ -80,21 +81,107 @@ export default function SettingsScreen() {
                             trackColor={{ false: colors.border, true: colors.primary }}
                         />
                     </View>
+
+                    {/* <View style={[styles.divider, { backgroundColor: colors.border }]} /> */}
+
+                    {/* <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+                        <View style={styles.rowLeft}>
+                            <Volume2 color={colors.primary} size={20} />
+                            <Text style={[styles.rowLabel, { color: colors.text }]}>Giọng đọc mặc định</Text>
+                        </View>
+                        <View style={styles.rowRight}>
+                            <Text style={[styles.rowSubtext, { color: colors.textMuted }]}>Nam (Miền Nam)</Text>
+                            <ChevronRight color={colors.textMuted} size={18} />
+                        </View>
+                    </TouchableOpacity> */}
+
+                    {/* <View style={[styles.divider, { backgroundColor: colors.border }]} /> */}
+
+                    {/* <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+                        <View style={styles.rowLeft}>
+                            <Globe color={colors.primary} size={20} />
+                            <Text style={[styles.rowLabel, { color: colors.text }]}>Ngôn ngữ Kinh Thánh</Text>
+                        </View>
+                        <View style={styles.rowRight}>
+                            <Text style={[styles.rowSubtext, { color: colors.textMuted }]}>Tiếng Việt</Text>
+                            <ChevronRight color={colors.textMuted} size={18} />
+                        </View>
+                    </TouchableOpacity> */}
                 </View>
 
-                <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>BẢO MẬT</Text>
+                <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>DỮ LIỆU & THÔNG BÁO</Text>
+                <View style={[styles.group, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={styles.row}>
+                        <View style={styles.rowLeft}>
+                            <DownloadCloud color={colors.primary} size={20} />
+                            <Text style={[styles.rowLabel, { color: colors.text }]}>Tự động tải chương tiếp theo</Text>
+                        </View>
+                        <Switch
+                            value={autoDownload}
+                            onValueChange={setAutoDownload}
+                            trackColor={{ false: colors.border, true: colors.primary }}
+                        />
+                    </View>
+
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                    <View style={styles.row}>
+                        <View style={styles.rowLeft}>
+                            <Bell color={colors.primary} size={20} />
+                            <Text style={[styles.rowLabel, { color: colors.text }]}>Thông báo Lời Chúa hằng ngày</Text>
+                        </View>
+                        <Switch
+                            value={notificationsEnabled}
+                            onValueChange={setNotificationsEnabled}
+                            trackColor={{ false: colors.border, true: colors.primary }}
+                        />
+                    </View>
+                </View>
+
+                {/* <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>BẢO MẬT</Text>
                 <View style={[styles.group, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <TouchableOpacity
                         style={styles.row}
                         activeOpacity={0.7}
-                        onPress={() => router.push('/change-password')}
+                        onPress={() => router.push('/change-password' as any)}
                     >
                         <View style={styles.rowLeft}>
                             <KeyRound color={colors.primary} size={20} />
                             <Text style={[styles.rowLabel, { color: colors.text }]}>Đổi mật khẩu</Text>
                         </View>
-                        <ChevronRight color={colors.textMuted} size={20} />
+                        <ChevronRight color={colors.textMuted} size={18} />
                     </TouchableOpacity>
+                </View> */}
+
+                <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>THÔNG TIN & HỖ TRỢ</Text>
+                <View style={[styles.group, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+                        <View style={styles.rowLeft}>
+                            <HelpCircle color={colors.primary} size={20} />
+                            <Text style={[styles.rowLabel, { color: colors.text }]}>Hướng dẫn sử dụng</Text>
+                        </View>
+                        <ChevronRight color={colors.textMuted} size={18} />
+                    </TouchableOpacity>
+
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                    <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+                        <View style={styles.rowLeft}>
+                            <ShieldCheck color={colors.primary} size={20} />
+                            <Text style={[styles.rowLabel, { color: colors.text }]}>Chính sách bảo mật</Text>
+                        </View>
+                        <ChevronRight color={colors.textMuted} size={18} />
+                    </TouchableOpacity>
+
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                    <View style={styles.row}>
+                        <View style={styles.rowLeft}>
+                            <Info color={colors.primary} size={20} />
+                            <Text style={[styles.rowLabel, { color: colors.text }]}>Phiên bản ứng dụng</Text>
+                        </View>
+                        <Text style={[styles.rowSubtext, { color: colors.textMuted }]}>v1.0.0</Text>
+                    </View>
                 </View>
 
                 <TouchableOpacity
@@ -137,7 +224,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: Spacing.four,
-        paddingBottom: Spacing.six * 2,
+        paddingBottom: 120,
     },
     profileCard: {
         flexDirection: 'row',
@@ -145,7 +232,7 @@ const styles = StyleSheet.create({
         padding: Spacing.four,
         borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        marginBottom: Spacing.four,
+        marginBottom: Spacing.three,
     },
     avatar: {
         width: 52,
@@ -174,12 +261,11 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.sans,
         letterSpacing: 1,
         marginBottom: Spacing.two,
-        marginTop: Spacing.two,
+        marginTop: Spacing.three,
     },
     group: {
         borderRadius: BorderRadius.md,
         borderWidth: 1,
-        marginBottom: Spacing.three,
         overflow: 'hidden',
     },
     row: {
@@ -194,10 +280,23 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: Spacing.three,
     },
+    rowRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.one,
+    },
     rowLabel: {
         fontSize: 15,
         fontFamily: Fonts.sans,
         fontWeight: '500',
+    },
+    rowSubtext: {
+        fontSize: 13,
+        fontFamily: Fonts.sans,
+    },
+    divider: {
+        height: 1,
+        marginLeft: Spacing.four,
     },
     logoutBtn: {
         flexDirection: 'row',
@@ -208,6 +307,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.md,
         borderWidth: 1,
         marginTop: Spacing.four,
+        marginBottom: Spacing.four,
     },
     logoutText: {
         color: '#EF4444',

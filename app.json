@@ -39,6 +39,23 @@
           "enableBackgroundPlayback": true
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ứng dụng này truy cập vào ảnh của bạn để cho phép bạn cập nhật ảnh đại diện.",
+          "cameraPermission": "Cho phép $(PRODUCT_NAME) sử dụng máy ảnh / thư viện ảnh",
+          "//": "Disables the microphone permission",
+          "microphonePermission": "Cho phép $(PRODUCT_NAME) sử dụng microphone",
+          "colors": {
+            "cropToolbarColor": "#000000"
+          },
+          "dark": {
+            "colors": {
+              "cropToolbarColor": "#000000"
+            }
+          }
+        }
+      ],
       "expo-font"
     ],
     "experiments": {

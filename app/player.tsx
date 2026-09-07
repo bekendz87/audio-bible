@@ -1,3 +1,4 @@
+import { ShareData, ShareModal } from '@/components/ui/ShareModal';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useAudio } from '@/context/AudioContext';
 import { useThemeColors } from '@/hooks/use-theme';
@@ -5,332 +6,334 @@ import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import {
     ChevronDown,
-    Gauge,
+    FastForward,
+    Heart,
+    Moon,
     Pause,
     Play,
-    RotateCcw,
-    RotateCw,
+    Rewind,
+    Share2,
     Volume2,
     VolumeX,
+    Zap
 } from 'lucide-react-native';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
-    GestureResponderEvent,
     Image,
     SafeAreaView,
     StyleSheet,
     Text,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from 'react-native';
 
-const SPEED_OPTIONS = [0.75, 1.0, 1.25, 1.5, 2.0];
+const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) {
+        return '0:00';
+    }
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+};
 
 export default function PlayerScreen() {
     const colors = useThemeColors();
     const router = useRouter();
+    const { width } = useWindowDimensions();
+    const [shareData, setShareData] = useState<ShareData | null>(null);
     const {
         currentTrack,
         isPlaying,
+        togglePlayPause,
         currentTime,
         duration,
-        playbackRate,
-        isMuted,
-        togglePlayPause,
         seekTo,
         setSpeed,
-        toggleMute,
+        isMuted,
+        toggleMute
     } = useAudio();
 
+    const [isLiked, setIsLiked] = useState(false);
+    const [playbackRate, setPlaybackRateState] = useState(1);
     const [isSeeking, setIsSeeking] = useState(false);
-    const [seekValue, setSeekValue] = useState(0);
-
-    const sliderContainerRef = useRef<View>(null);
-    const sliderLayoutRef = useRef<{ width: number; pageX: number }>({ width: 0, pageX: 0 });
+    const [seekPosition, setSeekPosition] = useState(0);
 
     if (!currentTrack) {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-                <View style={styles.emptyContainer}>
-                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                        Chưa chọn bài audio nào để phát.
-                    </Text>
-                    <TouchableOpacity
-                        style={[styles.backBtn, { backgroundColor: colors.primary }]}
-                        onPress={() => router.back()}
-                    >
-                        <Text style={{ color: colors.primaryElement, fontWeight: '600' }}>
-                            Quay lại
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            </SafeAreaView>
-        );
+        return null;
     }
 
-    const formatTime = (seconds: number) => {
-        if (isNaN(seconds) || seconds <= 0) {
-            return '00:00';
+    const cardWidth = width - Spacing.four * 2;
+    const artworkSize = cardWidth - Spacing.four * 2;
+
+    const handleToggleRate = async () => {
+        const rates = [1, 1.25, 1.5, 2];
+        const nextIndex = (rates.indexOf(playbackRate) + 1) % rates.length;
+        const newRate = rates[nextIndex];
+
+        setPlaybackRateState(newRate);
+        if (setSpeed) {
+            await setSpeed(newRate);
         }
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    const handleSkipBackward = () => {
-        seekTo(Math.max(0, currentTime - 10));
-    };
-
-    const handleSkipForward = () => {
-        seekTo(Math.min(duration, currentTime + 10));
-    };
-
-    const handleToggleSpeed = () => {
-        const currentIndex = SPEED_OPTIONS.indexOf(playbackRate);
-        const nextIndex = (currentIndex + 1) % SPEED_OPTIONS.length;
-        setSpeed(SPEED_OPTIONS[nextIndex]);
-    };
-
-    const measureSlider = () => {
-        sliderContainerRef.current?.measure((x, y, width, height, pageX, pageY) => {
-            sliderLayoutRef.current = { width, pageX };
+    const handleOpenShare = () => {
+        setShareData({
+            title: currentTrack.title,
+            subtitle: currentTrack.subtitle,
+            url: `https://kinhthanh.app/book/${currentTrack.id}`,
         });
     };
 
-   
-    const handleTouchStart = (event: GestureResponderEvent) => {
-        const { width, pageX } = sliderLayoutRef.current;
-        if (width <= 0 || duration <= 0) {
-            return;
-        }
-
-        const touchX = event.nativeEvent.pageX - pageX;
-        const percentage = Math.max(0, Math.min(1, touchX / width));
-        const targetTime = percentage * duration;
-
-        setIsSeeking(true);
-        setSeekValue(targetTime);
-        seekTo(targetTime);
-
-        setTimeout(() => {
-            setIsSeeking(false);
-        }, 150);
-    };
-
-    const displayTime = isSeeking ? seekValue : currentTime;
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.iconBtn} onPress={() => router.dismiss()} activeOpacity={0.7}>
-                    <ChevronDown color={colors.text} size={28} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.textMuted }]}>ĐANG PHÁT</Text>
-                <View style={{ width: 28 }} />
-            </View>
+        <SafeAreaView style={[styles.screenContainer, { backgroundColor: colors.background }]}>
 
-            <View style={styles.content}>
-                <View style={styles.artworkContainer}>
+            <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.back()}
+                style={styles.dragIndicatorWrapper}
+            >
+                <View style={[styles.dragIndicator, { backgroundColor: colors.border }]} />
+            </TouchableOpacity>
+
+            <View style={[styles.mainCard, { width: cardWidth, backgroundColor: colors.card }]}>
+
+                <View style={styles.headerRow}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+                        <ChevronDown color={colors.text} size={26} />
+                    </TouchableOpacity>
+
+                    <Text style={[styles.headerTitle, { color: colors.textMuted }]}>
+                        Đang phát audio
+                    </Text>
+
+                    <TouchableOpacity style={styles.iconBtn} onPress={handleOpenShare}>
+                        <Share2 color={colors.text} size={20} />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.artworkWrapper}>
                     <Image
                         source={{
                             uri:
                                 currentTrack.artworkUrl ||
-                                'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=600',
+                                'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600',
                         }}
-                        style={[styles.artwork, { borderColor: colors.border }]}
+                        style={[styles.artwork, { width: artworkSize, height: artworkSize }]}
                     />
                 </View>
 
-                <View style={styles.infoContainer}>
-                    <Text numberOfLines={2} style={[styles.title, { color: colors.text }]}>
-                        {currentTrack.title}
-                    </Text>
-                    <Text numberOfLines={1} style={[styles.subtitle, { color: colors.textMuted }]}>
-                        {currentTrack.subtitle}
-                    </Text>
-                </View>
 
-                <View style={styles.progressContainer}>
-                    <View
-                        ref={sliderContainerRef}
-                        style={styles.sliderWrapper}
-                        onLayout={measureSlider}
-                        onTouchStart={handleTouchStart}
-                    >
+                <View style={styles.contentSection}>
+                    <View style={styles.infoRow}>
+                        <View style={styles.titleWrapper}>
+                            <Text numberOfLines={1} style={[styles.title, { color: colors.text }]}>
+                                {currentTrack.title}
+                            </Text>
+                            <Text numberOfLines={1} style={[styles.subtitle, { color: colors.textMuted }]}>
+                                {currentTrack.subtitle}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => setIsLiked(!isLiked)}
+                            activeOpacity={0.7}
+                            style={styles.iconBtn}
+                        >
+                            <Heart
+                                color={isLiked ? colors.primary : colors.textMuted}
+                                fill={isLiked ? colors.primary : 'transparent'}
+                                size={24}
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.progressSection}>
                         <Slider
                             style={styles.slider}
                             minimumValue={0}
-                            maximumValue={duration > 0 ? duration : 1}
-                            value={displayTime}
+                            maximumValue={duration || 1}
+                            value={isSeeking ? seekPosition : currentTime}
                             minimumTrackTintColor={colors.primary}
                             maximumTrackTintColor={colors.border}
                             thumbTintColor={colors.primary}
-                            onSlidingStart={(value) => {
+                            onValueChange={(val) => {
                                 setIsSeeking(true);
-                                setSeekValue(value);
+                                setSeekPosition(val);
                             }}
-                            onValueChange={(value) => {
-                                setSeekValue(value);
-                            }}
-                            onSlidingComplete={(value) => {
-                                seekTo(value);
+                            onSlidingComplete={(val) => {
                                 setIsSeeking(false);
+                                seekTo(val);
                             }}
                         />
+                        <View style={styles.timeRow}>
+                            <Text style={[styles.timeText, { color: colors.textMuted }]}>
+                                {formatTime(isSeeking ? seekPosition : currentTime)}
+                            </Text>
+                            <Text style={[styles.timeText, { color: colors.textMuted }]}>
+                                {formatTime(duration)}
+                            </Text>
+                        </View>
                     </View>
 
-                    <View style={styles.timeRow}>
-                        <Text style={[styles.timeText, { color: colors.textMuted }]}>
-                            {formatTime(displayTime)}
-                        </Text>
-                        <Text style={[styles.timeText, { color: colors.textMuted }]}>
-                            {formatTime(duration)}
-                        </Text>
+                    <View style={styles.controlsRow}>
+                        <TouchableOpacity
+                            onPress={() => seekTo(Math.max(0, currentTime - 10))}
+                            activeOpacity={0.7}
+                            style={styles.controlBtn}
+                        >
+                            <Rewind color={colors.textMuted} fill={colors.textMuted} size={28} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={togglePlayPause}
+                            activeOpacity={0.8}
+                            style={[styles.playBtn, { backgroundColor: colors.primary }]}
+                        >
+                            {isPlaying ? (
+                                <Pause color={colors.primaryElement} fill={colors.primaryElement} size={28} />
+                            ) : (
+                                <Play color={colors.primaryElement} fill={colors.primaryElement} size={28} style={{ marginLeft: 3 }} />
+                            )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => seekTo(Math.min(duration, currentTime + 10))}
+                            activeOpacity={0.7}
+                            style={styles.controlBtn}
+                        >
+                            <FastForward color={colors.textMuted} fill={colors.textMuted} size={28} />
+                        </TouchableOpacity>
                     </View>
-                </View>
 
-                <View style={styles.controlsRow}>
-                    <TouchableOpacity style={styles.controlIconBtn} onPress={handleSkipBackward} activeOpacity={0.7}>
-                        <RotateCcw color={colors.text} size={26} />
-                        <Text style={[styles.skipLabel, { color: colors.text }]}>10</Text>
-                    </TouchableOpacity>
+                    <View style={styles.footerTools}>
+                        <TouchableOpacity
+                            style={[styles.toolChip, { backgroundColor: colors.background, borderColor: colors.border }]}
+                            onPress={handleToggleRate}
+                        >
+                            <Zap color={colors.primary} size={15} />
+                            <Text style={[styles.toolText, { color: colors.text }]}>{playbackRate}x</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={[styles.playBtn, { backgroundColor: colors.primary }]}
-                        onPress={togglePlayPause}
-                        activeOpacity={0.8}
-                    >
-                        {isPlaying ? (
-                            <Pause color={colors.primaryElement} size={32} />
-                        ) : (
-                            <Play color={colors.primaryElement} size={32} style={{ marginLeft: 4 }} />
-                        )}
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.toolChip, { backgroundColor: colors.background, borderColor: colors.border }]}
+                            onPress={toggleMute}
+                        >
+                            {isMuted ? (
+                                <VolumeX color={colors.primary} size={15} />
+                            ) : (
+                                <Volume2 color={colors.textMuted} size={15} />
+                            )}
+                            <Text style={[styles.toolText, { color: colors.text }]}>
+                                {isMuted ? 'Mute' : 'Âm lượng'}
+                            </Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.controlIconBtn} onPress={handleSkipForward} activeOpacity={0.7}>
-                        <RotateCw color={colors.text} size={26} />
-                        <Text style={[styles.skipLabel, { color: colors.text }]}>10</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.footerRow}>
-                    <TouchableOpacity
-                        style={[styles.chipBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-                        onPress={handleToggleSpeed}
-                        activeOpacity={0.7}
-                    >
-                        <Gauge color={colors.primary} size={18} />
-                        <Text style={[styles.chipText, { color: colors.text }]}>{playbackRate}x</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.chipBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-                        onPress={toggleMute}
-                        activeOpacity={0.7}
-                    >
-                        {isMuted ? (
-                            <VolumeX color="#EF4444" size={18} />
-                        ) : (
-                            <Volume2 color={colors.primary} size={18} />
-                        )}
-                        <Text style={[styles.chipText, { color: colors.text }]}>
-                            {isMuted ? 'Tắt tiếng' : 'Âm thanh'}
-                        </Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.toolChip, { backgroundColor: colors.background, borderColor: colors.border }]}
+                        >
+                            <Moon color={colors.textMuted} size={15} />
+                            <Text style={[styles.toolText, { color: colors.text }]}>Hẹn giờ</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
+            <ShareModal
+                visible={!!shareData}
+                data={shareData}
+                onClose={() => setShareData(null)}
+            />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    emptyContainer: {
+    screenContainer: {
         flex: 1,
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: Spacing.three,
     },
-    emptyText: {
-        fontSize: 15,
-        fontFamily: Fonts.sans,
-    },
-    backBtn: {
-        paddingHorizontal: Spacing.four,
+    dragIndicatorWrapper: {
         paddingVertical: Spacing.two,
-        borderRadius: BorderRadius.md,
+        width: '100%',
+        alignItems: 'center',
     },
-    header: {
+    dragIndicator: {
+        width: 36,
+        height: 5,
+        borderRadius: 3,
+    },
+    mainCard: {
+        flex: 1,
+        borderRadius: 32,
+        paddingHorizontal: Spacing.four,
+        paddingTop: Spacing.two,
+        paddingBottom: Spacing.four,
+        justifyContent: 'space-between',
+    },
+    headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: Spacing.four,
-        paddingTop: Spacing.two,
-        height: 56,
+        height: 44,
+    },
+    headerTitle: {
+        fontSize: 12,
+        fontWeight: '600',
+        fontFamily: Fonts.sans,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     iconBtn: {
         padding: Spacing.one,
     },
-    headerTitle: {
-        fontSize: 13,
-        fontWeight: 'bold',
-        fontFamily: Fonts.sans,
-        letterSpacing: 1.5,
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: Spacing.six,
-        justifyContent: 'space-around',
-        paddingBottom: Spacing.six,
-    },
-    artworkContainer: {
+    artworkWrapper: {
         alignItems: 'center',
-        marginTop: Spacing.two,
+        justifyContent: 'center',
+        marginVertical: Spacing.two,
     },
     artwork: {
-        width: 260,
-        height: 260,
         borderRadius: BorderRadius.xl,
-        borderWidth: 1,
     },
-    infoContainer: {
+    contentSection: {
+        gap: Spacing.two,
+    },
+    infoRow: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginVertical: Spacing.three,
+        justifyContent: 'space-between',
+        paddingHorizontal: Spacing.one,
+    },
+    titleWrapper: {
+        flex: 1,
+        marginRight: Spacing.two,
     },
     title: {
         fontSize: 20,
         fontWeight: 'bold',
         fontFamily: Fonts.sans,
-        textAlign: 'center',
-        marginBottom: Spacing.one,
     },
     subtitle: {
         fontSize: 14,
         fontFamily: Fonts.sans,
-        textAlign: 'center',
+        marginTop: 2,
     },
-    progressContainer: {
-        width: '100%',
-    },
-    sliderWrapper: {
-        width: '100%',
-        height: 40,
-        justifyContent: 'center',
+    progressSection: {
+        marginVertical: Spacing.one,
     },
     slider: {
         width: '100%',
-        height: 40,
+        height: 30,
+        marginHorizontal: -8,
     },
     timeRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         paddingHorizontal: Spacing.one,
-        marginTop: -8,
+        marginTop: -6,
     },
     timeText: {
         fontSize: 12,
+        fontWeight: '600',
         fontFamily: Fonts.sans,
     },
     controlsRow: {
@@ -338,48 +341,40 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: Spacing.six,
-        marginVertical: Spacing.two,
+        marginVertical: Spacing.one,
     },
-    controlIconBtn: {
-        alignItems: 'center',
-        justifyContent: 'center',
+    controlBtn: {
         padding: Spacing.two,
-        position: 'relative',
-    },
-    skipLabel: {
-        fontSize: 9,
-        fontWeight: 'bold',
-        position: 'absolute',
-        top: 19,
     },
     playBtn: {
-        width: 68,
-        height: 68,
-        borderRadius: 34,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
         alignItems: 'center',
         justifyContent: 'center',
-        elevation: 4,
+        elevation: 3,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
     },
-    footerRow: {
+    footerTools: {
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: Spacing.three,
+        gap: Spacing.two,
+        marginTop: Spacing.one,
     },
-    chipBtn: {
+    toolChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.two,
+        gap: 6,
         paddingHorizontal: Spacing.three,
         paddingVertical: Spacing.two,
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.full,
         borderWidth: 1,
     },
-    chipText: {
-        fontSize: 13,
+    toolText: {
+        fontSize: 12,
         fontWeight: '600',
         fontFamily: Fonts.sans,
     },

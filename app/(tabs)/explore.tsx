@@ -1,8 +1,9 @@
+import { ShareData } from '@/components/ui/ShareModal';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useAudio } from '@/context/AudioContext';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useRouter } from 'expo-router';
-import { Play, Search, Sparkles, X } from 'lucide-react-native';
+import { BookOpen, Play, Search, Sparkles, X } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   FlatList,
@@ -16,6 +17,8 @@ import {
   View,
 } from 'react-native';
 
+const CATEGORIES = ['Tất cả', 'Cựu Ước', 'Tân Ước', 'Thánh Vịnh', 'Suy Tẫm', 'Hội Thoại'];
+
 const MOODS = ['Bình an', 'Hi vọng', 'Cầu nguyện', 'Tạ ơn', 'Sức mạnh', 'Yêu thương'];
 
 const COLLECTIONS = [
@@ -27,27 +30,37 @@ const COLLECTIONS = [
 const MOCK_AUDIO_DATA = [
   {
     id: '1',
-    title: 'Thiết Kế Hệ Thống Microservices',
-    subtitle: 'Chương 1: Tổng quan kiến trúc',
-    artworkUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600',
+    title: 'Sáng Thế Ký - Chương 1',
+    subtitle: 'Khởi đầu sự sáng tạo',
+    artworkUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=600',
     audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    duration: 1800,
+    duration: 312,
   },
   {
     id: '2',
-    title: 'Suy Tẫm & Bình An',
-    subtitle: 'Chương 2: Lời hứa ban sức mạnh',
-    artworkUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=600',
+    title: 'Ma-thi-ơ - Chương 5',
+    subtitle: 'Bài giảng trên núi & Bát Phúc',
+    artworkUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=600',
     audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-    duration: 1200,
+    duration: 525,
+  },
+  {
+    id: '3',
+    title: 'Thi Thiên 23 - Chúa Là Đấng Chăn Giữ Tôi',
+    subtitle: 'Suy tẫm bình an',
+    artworkUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    duration: 210,
   },
 ];
 
 export default function ExploreScreen() {
   const colors = useThemeColors();
   const router = useRouter();
-  const { playTrack } = useAudio();
+  const { playTrack, currentTrack, isPlaying, togglePlayPause } = useAudio();
   const [query, setQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+
 
   const filteredResults = query.trim()
     ? MOCK_AUDIO_DATA.filter(
@@ -57,12 +70,19 @@ export default function ExploreScreen() {
     )
     : [];
 
+  const handleTrackPress = (item: typeof MOCK_AUDIO_DATA[0]) => {
+    if (currentTrack?.id === item.id) {
+      togglePlayPause();
+    } else {
+      playTrack(item);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Khám Phá</Text>
       </View>
-
       <View
         style={[
           styles.searchBox,
@@ -71,14 +91,14 @@ export default function ExploreScreen() {
       >
         <Search color={colors.textMuted} size={20} />
         <TextInput
-          placeholder="Tìm sách, chương, chủ đề..."
+          placeholder="Tìm sách, chương, câu Kinh Thánh..."
           placeholderTextColor={colors.textMuted}
           style={[styles.searchInput, { color: colors.text }]}
           value={query}
           onChangeText={setQuery}
         />
         {query.length > 0 && (
-          <TouchableOpacity onPress={() => setQuery('')}>
+          <TouchableOpacity onPress={() => setQuery('')} hitSlop={8}>
             <X color={colors.textMuted} size={18} />
           </TouchableOpacity>
         )}
@@ -86,43 +106,88 @@ export default function ExploreScreen() {
 
       {query.trim().length > 0 ? (
         <View style={styles.searchResultsContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Kết quả tìm kiếm</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Kết quả tìm kiếm ({filteredResults.length})
+          </Text>
           <FlatList
             data={filteredResults}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ gap: Spacing.two }}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => playTrack(item)}
-                activeOpacity={0.7}
-              >
-                <Image source={{ uri: item.artworkUrl }} style={styles.resultImage} />
-                <View style={styles.resultInfo}>
-                  <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  <Text style={[styles.resultSub, { color: colors.textMuted }]} numberOfLines={1}>
-                    {item.subtitle}
-                  </Text>
-                </View>
+            contentContainerStyle={styles.listPadding}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => {
+              const isCurrentPlaying = currentTrack?.id === item.id && isPlaying;
+
+              return (
                 <TouchableOpacity
-                  style={[styles.playBtn, { backgroundColor: colors.primary }]}
-                  onPress={() => playTrack(item)}
+                  style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => handleTrackPress(item)}
+                  activeOpacity={0.7}
                 >
-                  <Play color={colors.primaryElement} size={16} style={{ marginLeft: 2 }} />
+                  <Image source={{ uri: item.artworkUrl }} style={styles.resultImage} />
+                  <View style={styles.resultInfo}>
+                    <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={[styles.resultSub, { color: colors.textMuted }]} numberOfLines={1}>
+                      {item.subtitle}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.playBtn, { backgroundColor: colors.primary }]}
+                    onPress={() => handleTrackPress(item)}
+                  >
+                    <Play color={colors.primaryElement} size={16} style={{ marginLeft: 2 }} />
+                  </TouchableOpacity>
                 </TouchableOpacity>
-              </TouchableOpacity>
-            )}
+              );
+            }}
             ListEmptyComponent={
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                Không tìm thấy bài audio phù hợp.
-              </Text>
+              <View style={styles.emptyContainer}>
+                <BookOpen size={40} color={colors.textMuted} />
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                  Không tìm thấy bài audio phù hợp với từ khóa.
+                </Text>
+              </View>
             }
           />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryBar}
+          >
+            {CATEGORIES.map((cat, idx) => {
+              const isActive = selectedCategory === cat;
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={[
+                    styles.catChip,
+                    {
+                      backgroundColor: isActive ? colors.primary : colors.card,
+                      borderColor: isActive ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => setSelectedCategory(cat)}
+                >
+                  <Text
+                    style={[
+                      styles.catText,
+                      { color: isActive ? colors.primaryElement : colors.text },
+                    ]}
+                  >
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Nghe theo tâm trạng</Text>
           <View style={styles.chipGrid}>
             {MOODS.map((mood, idx) => (
@@ -133,8 +198,9 @@ export default function ExploreScreen() {
                   { backgroundColor: colors.card, borderColor: colors.border },
                 ]}
                 onPress={() => setQuery(mood)}
+                activeOpacity={0.7}
               >
-                <Sparkles color={colors.primary} size={16} />
+                <Sparkles color={colors.primary} size={15} />
                 <Text style={[styles.moodText, { color: colors.text }]}>{mood}</Text>
               </TouchableOpacity>
             ))}
@@ -149,7 +215,8 @@ export default function ExploreScreen() {
                   styles.collectionCard,
                   { backgroundColor: colors.card, borderColor: colors.border },
                 ]}
-                onPress={() => router.push(`/book/${item.id}`)}
+                onPress={() => router.push(`/book/${item.id}` as any)}
+                activeOpacity={0.7}
               >
                 <Text style={[styles.collectionTitle, { color: colors.text }]}>
                   {item.title}
@@ -184,7 +251,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: Spacing.four,
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.two,
     paddingHorizontal: Spacing.three,
     height: 44,
     borderRadius: BorderRadius.md,
@@ -196,13 +263,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.sans,
   },
+  categoryBar: {
+    gap: Spacing.two,
+    marginVertical: Spacing.two,
+  },
+  catChip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  catText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: Fonts.sans,
+  },
   scrollContent: {
     paddingHorizontal: Spacing.four,
-    paddingBottom: Spacing.six * 2,
+    paddingBottom: 120,
   },
   searchResultsContainer: {
     flex: 1,
     paddingHorizontal: Spacing.four,
+  },
+  listPadding: {
+    gap: Spacing.two,
+    paddingBottom: 120,
   },
   sectionTitle: {
     fontSize: 18,
@@ -275,15 +361,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   playBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 60,
+    gap: Spacing.two,
+  },
   emptyText: {
     fontFamily: Fonts.sans,
-    marginTop: Spacing.four,
     textAlign: 'center',
   },
 });
