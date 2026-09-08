@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.beken87.audio-bible"
+      "bundleIdentifier": "com.beken87.audio-bible",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "usesAppleSignIn": true,
+      "appleTeamId": "9GM5Y4Q89T"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,6 +27,7 @@
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
       "package": "com.beken87.audiobible"
+      ,"googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -56,7 +60,8 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true,

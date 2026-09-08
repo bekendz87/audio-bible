@@ -1,5 +1,8 @@
+import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme';
+import { loginWithEmail } from '@/services/firebase';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -14,12 +17,29 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
     const router = useRouter();
+    const signIn = useAuthStore((state) => state.signIn);
     const theme = useThemeColors();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = () => {
-        router.replace('/(tabs)');
+    const handleLogin = async () => {
+        if (!email.trim() || !password) {
+            setError('Vui lòng nhập email và mật khẩu.');
+            return;
+        }
+        setError('');
+        setIsLoading(true);
+        try {
+            const user = await loginWithEmail(email, password);
+            signIn({ id: user.uid, name: user.displayName || email.split('@')[0], email: user.email || email, provider: 'email' });
+            router.replace('/(tabs)');
+        } catch {
+            setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -80,10 +100,16 @@ export default function LoginScreen() {
                     <TouchableOpacity
                         style={[styles.loginBtn, { backgroundColor: theme.primary }]}
                         onPress={handleLogin}
+                        disabled={isLoading}
                         activeOpacity={0.8}
                     >
-                        <Text style={[styles.loginBtnText, { color: theme.background }]}>Đăng Nhập</Text>
+                        <Text style={[styles.loginBtnText, { color: theme.background }]}>{isLoading ? 'Đang đăng nhập...' : 'Đăng Nhập'}</Text>
                     </TouchableOpacity>
+                    {!!error && <Text style={[styles.errorText, { color: '#EF4444' }]}>{error}</Text>}
+                    <TouchableOpacity style={styles.registerLink} onPress={() => router.push('/(auth)/register')}>
+                        <Text style={[styles.registerLinkText, { color: theme.primary }]}>Chưa có tài khoản? Đăng ký</Text>
+                    </TouchableOpacity>
+                    <SocialAuthButtons onError={setError} />
                 </View>
 
                 <TouchableOpacity style={styles.guestBtn} onPress={() => router.replace('/(tabs)')}>
@@ -169,5 +195,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: Fonts.sans,
         textDecorationLine: 'underline',
+    },
+    errorText: {
+        fontSize: 13,
+        fontFamily: Fonts.sans,
+        textAlign: 'center'
+    },
+    registerLink: {
+        alignItems: 'center'
+    },
+    registerLinkText: {
+        fontSize: 14,
+        fontWeight: '600',
+        fontFamily: Fonts.sans
     },
 });

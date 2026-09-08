@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "108270401177",
+    "project_id": "audio-bible-44698",
+    "storage_bucket": "audio-bible-44698.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:108270401177:android:8682809c0c3d2e798bea08",
+        "android_client_info": {
+          "package_name": "com.beken87.audiobible"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANRpBcvSpWnicLQwVbEUGkzEUBNYhT7PI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
