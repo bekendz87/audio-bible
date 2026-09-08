@@ -2,6 +2,7 @@ import { ShareData, ShareModal } from '@/components/ui/ShareModal';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useAudio } from '@/context/AudioContext';
 import { useThemeColors } from '@/hooks/use-theme';
+import { AlertApp } from '@/services/alert';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Bookmark, Clock, Play, Share2 } from 'lucide-react-native';
 import { useState } from 'react';
@@ -46,6 +47,7 @@ export default function BookDetailScreen() {
     const { playTrack, currentTrack } = useAudio();
 
     const [shareData, setShareData] = useState<ShareData | null>(null);
+    const [isBookmarked, setIsBookmarked] = useState(false);
 
     const bookDetail = {
         id,
@@ -75,6 +77,19 @@ export default function BookDetailScreen() {
         });
     };
 
+    const handleBookMarked = () => {
+        const nextState = !isBookmarked;
+        setIsBookmarked(nextState);
+
+        if (nextState) {
+            AlertApp.success("Đã thêm vào sách yêu thích");
+            return
+        } else {
+            AlertApp.error("Đã xóa khỏi sách yêu thích");
+            return
+        }
+    };
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
@@ -82,8 +97,12 @@ export default function BookDetailScreen() {
                     <ArrowLeft color={colors.text} size={24} />
                 </TouchableOpacity>
                 <View style={styles.headerActions}>
-                    <TouchableOpacity style={styles.iconBtn} hitSlop={8}>
-                        <Bookmark color={colors.text} size={22} />
+                    <TouchableOpacity style={styles.iconBtn} hitSlop={8} onPress={handleBookMarked}>
+                        <Bookmark
+                            color={isBookmarked ? colors.primary : colors.text}
+                            fill={isBookmarked ? colors.primary : 'transparent'}
+                            size={22}
+                        />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={handleOpenShare} style={styles.iconBtn} hitSlop={8}>
                         <Share2 color={colors.text} size={22} />

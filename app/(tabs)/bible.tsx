@@ -1,7 +1,6 @@
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
+import { useAudio } from '@/context/AudioContext';
 import { useThemeColors } from '@/hooks/use-theme';
-import { usePlayerStore } from '@/store/usePlayerStore';
-import { Chapter } from '@/types/bible';
 import { BookOpen, ChevronRight, Play, Search, X } from 'lucide-react-native';
 import { useState } from 'react';
 import {
@@ -43,7 +42,7 @@ const BOOKS_MOCK: BookItem[] = [
 
 export default function BibleScreen() {
     const colors = useThemeColors();
-    const { setCurrentChapter } = usePlayerStore();
+    const { playTrack } = useAudio();
 
     const [selectedTestament, setSelectedTestament] = useState<'old' | 'new'>('old');
     const [searchQuery, setSearchQuery] = useState('');
@@ -56,15 +55,13 @@ export default function BibleScreen() {
     });
 
     const handlePlayChapter = (bookName: string, chapterNum: number) => {
-        const sampleChapter: Chapter = {
-            id: `${bookName}-${chapterNum}-${Date.now()}`,
-            bookName,
-            chapterNum,
-            duration: '04:20',
+        playTrack({
+            id: `${bookName}-${chapterNum}`,
+            title: `${bookName} - Chương ${chapterNum}`,
+            subtitle: 'Giọng đọc Nam',
             audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-            reader: 'Giọng đọc Nam',
-        };
-        setCurrentChapter(sampleChapter);
+            duration: 260,
+        });
     };
 
     return (
@@ -101,6 +98,9 @@ export default function BibleScreen() {
                                     active && { backgroundColor: colors.primary },
                                 ]}
                                 onPress={() => setSelectedTestament(t.id as 'old' | 'new')}
+                                accessibilityRole="tab"
+                                accessibilityState={{ selected: active }}
+                                accessibilityLabel={`Lọc ${t.name}`}
                             >
                                 <Text
                                     style={[
@@ -141,6 +141,8 @@ export default function BibleScreen() {
                                     e.stopPropagation();
                                     handlePlayChapter(book.name, 1);
                                 }}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Phát ${book.name} chương 1`}
                             >
                                 <Play color={colors.primary} size={16} fill={colors.primary} />
                             </TouchableOpacity>
@@ -166,7 +168,11 @@ export default function BibleScreen() {
                             <Text style={[styles.modalTitle, { color: colors.text }]}>
                                 {selectedBookModal?.name}
                             </Text>
-                            <TouchableOpacity onPress={() => setSelectedBookModal(null)}>
+                            <TouchableOpacity
+                                onPress={() => setSelectedBookModal(null)}
+                                accessibilityRole="button"
+                                accessibilityLabel="Đóng chọn chương"
+                            >
                                 <X color={colors.text} size={22} />
                             </TouchableOpacity>
                         </View>

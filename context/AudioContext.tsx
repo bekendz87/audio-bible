@@ -1,4 +1,4 @@
-import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
+import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export interface Track {
@@ -17,12 +17,15 @@ interface AudioContextType {
     duration: number;
     playbackRate: number;
     isMuted: boolean;
+    isLoading: boolean;
+    error: string | null;
     playTrack: (track: Track) => void;
     togglePlayPause: () => void;
     seekTo: (seconds: number) => void;
     setSpeed: (rate: number) => void;
     toggleMute: () => void;
     stop: () => void;
+    retry: () => void;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -32,6 +35,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const [sourceUrl, setSourceUrl] = useState<string | null>(null);
     const [playbackRate, setPlaybackRateState] = useState<number>(1.0);
     const [isMuted, setIsMutedState] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         setAudioModeAsync({
@@ -55,6 +59,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }
         setCurrentTrack(track);
         setSourceUrl(track.audioUrl);
+        setError(null);
     };
 
     useEffect(() => {
@@ -62,6 +67,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             player.play();
         }
     }, [sourceUrl, player]);
+
+    useEffect(() => {
+        if (status?.error) {
+            setError('Không thể phát audio. Vui lòng thử lại.');
+        }
+    }, [status?.error]);
 
     const togglePlayPause = () => {
         if (!player) return;
@@ -99,6 +110,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             player.pause();
             setCurrentTrack(null);
             setSourceUrl(null);
+            setError(null);
+        }
+    };
+
+    const retry = () => {
+        if (sourceUrl && player) {
+            setError(null);
+            player.play();
         }
     };
 
@@ -116,12 +135,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
                 duration,
                 playbackRate,
                 isMuted,
+                isLoading: Boolean(sourceUrl && !status?.isLoaded && !error),
+                error,
                 playTrack,
                 togglePlayPause,
                 seekTo,
                 setSpeed,
                 toggleMute,
                 stop,
+                retry,
             }}
         >
             {children}

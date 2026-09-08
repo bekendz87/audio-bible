@@ -29,11 +29,14 @@ export function MiniPlayer() {
                 />
             </View>
 
-            <TouchableOpacity
-                style={styles.content}
-                activeOpacity={0.9}
-                onPress={() => router.push('/player' as never)}
-            >
+            <View style={styles.content}>
+                <TouchableOpacity
+                    style={styles.trackButton}
+                    activeOpacity={0.9}
+                    onPress={() => router.push('/player' as never)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mở trình phát ${currentTrack.title}`}
+                >
                 <Image
                     source={{
                         uri:
@@ -52,7 +55,14 @@ export function MiniPlayer() {
                     </Text>
                 </View>
 
-                <TouchableOpacity style={styles.actionBtn} onPress={togglePlayPause}>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={togglePlayPause}
+                    accessibilityRole="button"
+                    accessibilityLabel={isPlaying ? 'Tạm dừng audio' : 'Phát audio'}
+                >
                     {isPlaying ? (
                         <Pause color={colors.text} size={22} />
                     ) : (
@@ -60,10 +70,15 @@ export function MiniPlayer() {
                     )}
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionBtn} onPress={stop}>
+                <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={stop}
+                    accessibilityRole="button"
+                    accessibilityLabel="Đóng trình phát mini"
+                >
                     <X color={colors.textMuted} size={20} />
                 </TouchableOpacity>
-            </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -95,6 +110,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: Spacing.three,
         paddingVertical: Spacing.two,
+        gap: Spacing.three,
+    },
+    trackButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
         gap: Spacing.three,
     },
     artwork: {

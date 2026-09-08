@@ -1,5 +1,6 @@
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
+import { useAudio } from '@/context/AudioContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useThemeColors } from '@/hooks/use-theme';
 import { useRouter } from 'expo-router';
@@ -7,15 +8,13 @@ import {
     Bell,
     ChevronRight,
     DownloadCloud,
-    Globe,
     HelpCircle,
     Info,
     LogOut,
     Moon,
     ShieldCheck,
     Sun,
-    User,
-    Volume2
+    User
 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
@@ -32,6 +31,7 @@ export default function SettingsScreen() {
     const { isDark, toggleTheme } = useTheme();
     const colors = useThemeColors();
     const router = useRouter();
+    const { stop } = useAudio();
 
     const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
     const [autoDownload, setAutoDownload] = useState(true);
@@ -43,7 +43,9 @@ export default function SettingsScreen() {
     };
 
     const handleConfirmLogout = () => {
+        stop();
         setIsLogoutModalVisible(false);
+        router.replace('/(auth)/login');
     };
 
     return (
@@ -155,7 +157,7 @@ export default function SettingsScreen() {
 
                 <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>THÔNG TIN & HỖ TRỢ</Text>
                 <View style={[styles.group, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+                    <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={() => router.push('/help' as any)}>
                         <View style={styles.rowLeft}>
                             <HelpCircle color={colors.primary} size={20} />
                             <Text style={[styles.rowLabel, { color: colors.text }]}>Hướng dẫn sử dụng</Text>
@@ -165,7 +167,7 @@ export default function SettingsScreen() {
 
                     <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-                    <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+                    <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={() => router.push('/privacy' as any)}>
                         <View style={styles.rowLeft}>
                             <ShieldCheck color={colors.primary} size={20} />
                             <Text style={[styles.rowLabel, { color: colors.text }]}>Chính sách bảo mật</Text>
